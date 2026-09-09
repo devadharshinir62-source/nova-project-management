@@ -9,7 +9,7 @@ interface TaskCardProps {
 export default function TaskCard({ task }: TaskCardProps) {
   const assignee = members.find((m) => m.id === task.assigneeId);
   return (
-    <div className="bg-white rounded p-3 shadow mb-2">
+    <div className="flex flex-col bg-slate-900/60 border border-slate-800 rounded-2xl p-3 mb-2 hover:bg-slate-800/80 transition-colors">
       <h4 className="font-semibold">{task.title}</h4>
       <p className="text-sm text-gray-500">Priority: {task.priority}</p>
       <p className="text-sm text-gray-500">Due: {task.dueDate}</p>

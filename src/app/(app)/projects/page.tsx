@@ -77,7 +77,7 @@ export default function ProjectsPage() {
 
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Create Project</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
