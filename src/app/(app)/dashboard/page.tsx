@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import StatCard from '@/components/StatCard';
 import ProjectCard from '@/components/ProjectCard';
