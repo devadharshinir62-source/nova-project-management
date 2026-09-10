@@ -277,7 +277,10 @@ useEffect(() => {
             )}
           </div>
 
-          </form>
+            <div className="flex justify-end mt-4">
+              <Button type="submit">Create Task</Button>
+            </div>
+            </form>
         </ModalWrapper>
       )}
     </div>
