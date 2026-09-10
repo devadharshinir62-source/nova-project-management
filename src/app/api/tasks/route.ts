@@ -45,6 +45,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Selected project does not exist.' }, { status: 400 });
   }
 
+  // Verify assignee if provided
+  let assigneeConnect: any = undefined;
+  if (assigneeId) {
+    const existingAssignee = await prisma.user.findUnique({ where: { id: assigneeId } });
+    if (!existingAssignee) {
+      return NextResponse.json({ error: 'Selected assignee does not exist' }, { status: 400 });
+    }
+    assigneeConnect = { connect: { id: assigneeId } };
+  }
+
   const task = await prisma.task.create({
     data: {
       title,
@@ -53,7 +63,7 @@ export async function POST(request: Request) {
       priority,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       project: { connect: { id: projectId } },
-      assignee: assigneeId ? { connect: { id: assigneeId } } : undefined,
+      assignee: assigneeConnect,
     },
     include: {
       project: { select: { id: true, name: true } },

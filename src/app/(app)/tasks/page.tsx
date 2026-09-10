@@ -19,8 +19,9 @@ export default function TasksPage() {
   const [showModal, setShowModal] = useState(false)
   const [editTask, setEditTask] = useState<any>(null)
   const [projects, setProjects] = useState<any[]>([]);
-  const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterState>({});
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
   // Fetch projects for dropdown
   const fetchProjects = async () => {
@@ -38,7 +39,25 @@ export default function TasksPage() {
     }
   };
 
-  const [filters, setFilters] = useState<FilterState>({});
+  const [users, setUsers] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
+
+  // Fetch users for assignee dropdown
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    setUsersError(null);
+    try {
+      const res = await fetch('/api/users');
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (e: any) {
+      setUsersError(e.message);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
 
 
   const fetchTasks = async () => {
@@ -63,15 +82,21 @@ export default function TasksPage() {
     fetchTasks()
   }, [filters])
 
-  // Load projects once on component mount
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+// Load projects once on component mount
+useEffect(() => {
+  fetchProjects();
+}, []);
 
-  const openCreate = () => {
-    setEditTask(null)
-    setShowModal(true)
-  }
+// Function to open the Create Task modal
+const openCreate = () => {
+  setEditTask(null);
+  setShowModal(true);
+};
+
+// Load users once on component mount
+useEffect(() => {
+  fetchUsers();
+}, []);
 
   const openEdit = (task: Task) => {
     setEditTask(task)
@@ -230,14 +255,28 @@ export default function TasksPage() {
               <label className="block mb-1">Due Date</label>
               <Input name="dueDate" type="date" defaultValue={editTask?.dueDate?.split('T')[0]} />
             </div>
-            <div>
-              <label className="block mb-1">Assignee ID</label>
-              <Input name="assigneeId" defaultValue={editTask?.assigneeId} />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button type="button" onClick={() => setShowModal(false)} variant="secondary">Cancel</Button>
-              <Button type="submit">Save</Button>
-            </div>
+
+          {/* Assignee selection */}
+          <div className="flex flex-col">
+            <label className="block mb-1">Assignee</label>
+            {usersLoading ? (
+              <p>Loading users...</p>
+            ) : usersError ? (
+              <p className="text-red-500">{usersError}</p>
+            ) : users.length === 0 ? (
+              <p>No users available.</p>
+            ) : (
+              <Select name="assigneeId" defaultValue={editTask?.assigneeId}>
+                <option value="">Unassigned</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </div>
+
           </form>
         </ModalWrapper>
       )}
