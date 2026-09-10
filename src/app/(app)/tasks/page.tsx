@@ -18,7 +18,28 @@ export default function TasksPage() {
   const [error, setError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editTask, setEditTask] = useState<any>(null)
-  const [filters, setFilters] = useState<FilterState>({})
+  const [projects, setProjects] = useState<any[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+
+  // Fetch projects for dropdown
+  const fetchProjects = async () => {
+    setProjectsLoading(true);
+    setProjectsError(null);
+    try {
+      const res = await fetch('/api/projects');
+      if (!res.ok) throw new Error('Failed to fetch projects');
+      const data = await res.json();
+      setProjects(data);
+    } catch (e: any) {
+      setProjectsError(e.message);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  const [filters, setFilters] = useState<FilterState>({});
+
 
   const fetchTasks = async () => {
     setLoading(true)
@@ -42,6 +63,11 @@ export default function TasksPage() {
     fetchTasks()
   }, [filters])
 
+  // Load projects once on component mount
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
   const openCreate = () => {
     setEditTask(null)
     setShowModal(true)
@@ -64,31 +90,40 @@ export default function TasksPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const form = e.target as HTMLFormElement
-    const formData = new FormData(form)
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
     const payload: any = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      projectId: formData.get('projectId'),
-      status: formData.get('status'),
-      priority: formData.get('priority'),
-      dueDate: formData.get('dueDate'),
-      assigneeId: formData.get('assigneeId'),
-    }
+      title: (formData.get('title') as string | null) ?? undefined,
+      description: (formData.get('description') as string | null) || undefined,
+      projectId: (formData.get('projectId') as string | null) ?? undefined,
+      status: (formData.get('status') as string | null) || undefined,
+      priority: (formData.get('priority') as string | null) || undefined,
+      dueDate: (formData.get('dueDate') as string | null) || undefined,
+      assigneeId: (formData.get('assigneeId') as string | null) || undefined,
+    };
+    // Convert empty strings to undefined for optional fields
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === '' || payload[key] === null) {
+        payload[key] = undefined;
+      }
+    });
     try {
       const res = await fetch(editTask ? `/api/tasks/${editTask.id}` : '/api/tasks', {
         method: editTask ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error('Save failed')
-      setShowModal(false)
-      fetchTasks()
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || 'Save failed');
+      }
+      setShowModal(false);
+      fetchTasks();
     } catch (e: any) {
-      alert(e.message)
+      alert(e.message);
     }
-  }
+  };
 
   return (
     <div className="p-6 min-h-screen bg-slate-950 text-slate-100">
@@ -155,9 +190,25 @@ export default function TasksPage() {
               <label className="block mb-1">Description</label>
               <Textarea name="description" defaultValue={editTask?.description} />
             </div>
-            <div>
-              <label className="block mb-1">Project ID</label>
-              <Input name="projectId" required defaultValue={editTask?.projectId} />
+            {/* Project selection */}
+            <div className="flex flex-col">
+              <label className="block mb-1">Project</label>
+              {projectsLoading ? (
+                <p>Loading projects...</p>
+              ) : projectsError ? (
+                <p className="text-red-500">{projectsError}</p>
+              ) : projects.length === 0 ? (
+                <p>No projects available. Create a project first.</p>
+              ) : (
+                <Select name="projectId" required defaultValue={editTask?.projectId}>
+                  <option value="">Select a project</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
             </div>
             <div>
               <label className="block mb-1">Status</label>
