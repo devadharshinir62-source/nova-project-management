@@ -1,6 +1,7 @@
-// src/app/(app)/projects/[id]/page.tsx
+"use client"
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface ProjectDetail {
   id: string;
@@ -8,27 +9,48 @@ interface ProjectDetail {
   description: string;
   status: string;
   progress: number;
-  taskCount: number;
-  memberCount: number;
+  tasks: { id: string }[];
+  members: { id: string }[];
 }
 
-export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/projects/${params.id}`, {
-    credentials: 'include',
-    next: { revalidate: 0 },
-  });
+export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+  const [project, setProject] = useState<ProjectDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  if (res.status === 404) {
-    notFound();
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const res = await fetch(`/api/projects/${params.id}`, { credentials: 'include', next: { revalidate: 0 } });
+        if (res.status === 404) {
+          router.replace('/404');
+          return;
+        }
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || 'Failed to load project');
+        }
+        const data: ProjectDetail = await res.json();
+        setProject(data);
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProject();
+  }, [params.id, router]);
+
+  if (loading) {
+    return <div className="p-6">Loading...</div>;
+  }
+  if (error) {
+    return <div className="p-6 text-red-500">Error: {error}</div>;
+  }
+  if (!project) {
     return null;
   }
-
-  if (!res.ok) {
-    const error = await res.text();
-    return <div className="p-6">Error: {error}</div>;
-  }
-
-  const project: ProjectDetail = await res.json();
 
   const statusBadge = (() => {
     switch (project.status) {
@@ -57,11 +79,11 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
           </div>
           <div className="flex flex-col">
             <span className="font-medium text-slate-400">Tasks</span>
-            <span className="font-bold text-white">{project.taskCount}</span>
+            <span className="font-bold text-white">{project.tasks.length}</span>
           </div>
           <div className="flex flex-col">
             <span className="font-medium text-slate-400">Members</span>
-            <span className="font-bold text-white">{project.memberCount}</span>
+            <span className="font-bold text-white">{project.members.length}</span>
           </div>
         </div>
       </div>
