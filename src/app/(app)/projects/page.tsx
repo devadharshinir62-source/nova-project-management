@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import ProjectCard from '@/components/ProjectCard';
 import Button from '@/components/Button';
+import { Select } from '@/components/Input';
 import { Project } from '@/lib/types';
 
 export default function ProjectsPage() {
@@ -98,16 +99,16 @@ export default function ProjectsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
+                <Select
+                  name="status"
                   className="w-full border px-2 py-1"
                   value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, status: e.target.value })}
                 >
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                  <option value="PAUSED">PAUSED</option>
-                </select>
+                  <option value="ACTIVE">Active</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="PAUSED">Paused</option>
+                </Select>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button type="button" onClick={() => setShowModal(false)}>
